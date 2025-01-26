@@ -6,6 +6,22 @@ import argparse
 import os
 
 
+def look_up_table(engine):
+    table_name = "zones"
+    csv_file = "output.csv"
+    url = "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv"
+
+    # Download the data
+    os.system(f"wget {url} -O {csv_file}")
+
+    # Load the data
+    zones = pd.read_csv(csv_file)
+    zones.to_sql(name=table_name, con=engine, if_exists="replace")
+
+    # Remove the csv file
+    os.system(f"rm {csv_file}")
+
+
 def main(params):
     user = params.user
     password = params.password
@@ -29,6 +45,9 @@ def main(params):
     # Create a connection to the database
     engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
 
+    # Create the lookup table
+    look_up_table(engine)
+
     # Get the schema of the table
     print(pd.io.sql.get_schema(trips_subset, name=table_name, con=engine))
 
@@ -46,6 +65,11 @@ def main(params):
         print(
             f"Processed rows {start} to {end - 1}, it took {t_end - t_start:.3f} seconds"
         )
+
+    # Remove the parquet file
+    os.system(f"rm {parquet_name}")
+
+    print("Data ingestion complete")
 
 
 if __name__ == "__main__":
