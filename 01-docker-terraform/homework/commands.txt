@@ -1,7 +1,17 @@
+# QUESTION 1
+
 docker build -t python-test .
 
 docker run -it python-test
 
+root@52be0644079a:/# pip --version
+pip 24.3.1 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+
+# QUESTION 2
+Name of the container:port
+db:5432
+
+# SQL QUESTIONS
 URL=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz
 docker run -it \
     --network=01-docker-terraform_default \
@@ -13,3 +23,69 @@ docker run -it \
         --db=ny_taxi \
         --table_name=green_taxi_trips \
         --url=${URL}
+SELECT *
+FROM green_taxi_trips
+LIMIT 100;
+
+SELECT *
+FROM zones;
+
+
+-- QUESTION 3
+SELECT COUNT(*)
+FROM green_taxi_trips
+WHERE trip_distance <= 1;
+
+SELECT COUNT(*)
+FROM green_taxi_trips
+WHERE (trip_distance > 1 
+AND trip_distance <= 3);
+
+SELECT COUNT(*)
+FROM green_taxi_trips
+WHERE (trip_distance > 3 
+AND trip_distance <= 7);
+
+SELECT COUNT(*)
+FROM green_taxi_trips
+WHERE (trip_distance > 7 
+AND trip_distance <= 10);
+
+SELECT COUNT(*)
+FROM green_taxi_trips
+WHERE trip_distance > 10;
+
+-- QUESTION 4
+SELECT lpep_pickup_datetime::date,
+	MAX(trip_distance) AS max_trip_dist
+FROM green_taxi_trips
+WHERE lpep_pickup_datetime::date 
+IN ('2019-10-11', '2019-10-24', '2019-10-26', '2019-10-31')
+GROUP BY lpep_pickup_datetime::date
+ORDER BY max_trip_dist DESC;
+
+-- QUESTION 5
+SELECT t."PULocationID",
+	z."Borough",
+	z."Zone",
+	SUM(t.total_amount) AS total_per_loc
+FROM green_taxi_trips t
+JOIN zones z ON t."PULocationID" = z."LocationID"
+WHERE lpep_pickup_datetime::date = '2019-10-18'::date
+GROUP BY 1,2,3
+ORDER BY total_per_loc DESC;
+
+-- QUESTION 6
+SELECT t."PULocationID",
+	zpu."Borough" || '\' || zpu."Zone" AS zpu,
+	t."DOLocationID",
+	zdo."Borough" || '\' || zdo."Zone" AS zdo,
+	t.tip_amount
+FROM green_taxi_trips t
+JOIN zones zpu ON t."PULocationID" = zpu."LocationID"
+JOIN zones zdo ON t."DOLocationID" = zdo."LocationID"
+WHERE zpu."Zone" = 'East Harlem North'
+ORDER BY t.tip_amount DESC;
+
+--QUESTION 7
+terraform init, terraform apply -auto-approve, terraform destroy
