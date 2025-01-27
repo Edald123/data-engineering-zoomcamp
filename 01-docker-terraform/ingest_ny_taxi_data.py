@@ -22,6 +22,22 @@ def look_up_table(engine):
     os.system(f"rm {csv_file}")
 
 
+def load_data(file_path):
+    if file_path.endswith('.parquet'):
+        print("Detected Parquet file. Loading...")
+        data = pq.read_table(file_path).to_pandas()
+    elif file_path.endswith('.csv'):
+        print("Detected CSV file. Loading...")
+        data = pd.read_csv(file_path)
+    elif file_path.endswith('.csv.gz'):
+        print("Detected Gzipped CSV file. Loading...")
+        data = pd.read_csv(file_path, compression='gzip')
+    else:
+        raise ValueError("Unsupported file format. Please provide a .parquet, .csv, or .csv.gz file.")
+
+    return data
+
+
 def main(params):
     user = params.user
     password = params.password
@@ -30,14 +46,15 @@ def main(params):
     db = params.db
     table_name = params.table_name
     url = params.url
-    parquet_name = "output.parquet"
+
+    # Determine the file name based on the URL
+    file_name = url.split('/')[-1]
 
     # Download the data
-    os.system(f"wget {url} -O {parquet_name}")
+    os.system(f"wget {url} -O {file_name}")
 
-    # Load the data
-    trips = pq.read_table(parquet_name)
-    trips = trips.to_pandas()
+    # Load the data dynamically based on the file type
+    trips = load_data(file_name)
 
     # Get the first 100 trips
     trips_subset = trips.iloc[:100]
@@ -66,8 +83,8 @@ def main(params):
             f"Processed rows {start} to {end - 1}, it took {t_end - t_start:.3f} seconds"
         )
 
-    # Remove the parquet file
-    os.system(f"rm {parquet_name}")
+    # Remove the downloaded file
+    os.system(f"rm {file_name}")
 
     print("Data ingestion complete")
 
@@ -83,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", help="Port of the database")
     parser.add_argument("--db", help="Name of the database")
     parser.add_argument("--table_name", help="Name of the table to write the data to")
-    parser.add_argument("--url", help="URL of the parquet file to ingest")
+    parser.add_argument("--url", help="URL of the data file to ingest (CSV or Parquet)")
 
     args = parser.parse_args()
     main(args)

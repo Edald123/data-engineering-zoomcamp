@@ -57,3 +57,16 @@ docker run -it \
         --db=ny_taxi \
         --table_name=yellow_taxi_trips \
         --url=${URL}
+
+INTEGRATE YOUR PYTHON PIPELINE WITH DOCKER-COMPOSE
+URL=https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2019-10.parquet
+docker run -it \
+    --network=01-docker-terraform_default \
+    taxi_ingest:v001 \
+        --user=root \
+        --password=root \
+        --host=01-docker-terraform-pgdatabase-1 \
+        --port=5432 \
+        --db=ny_taxi \
+        --table_name=yellow_taxi_trips \
+        --url=${URL}
